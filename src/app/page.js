@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 
 const API_BASE = "https://api.mail.tm";
 
@@ -19,12 +19,6 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [selected, setSelected] = useState(null);
   const pollRef = useRef(null);
-
-  useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, []);
 
   async function createAddress() {
     setError(null);
@@ -98,6 +92,11 @@ export default function Home() {
     }
   }
 
+  function copyText() {
+    const text = account.address;
+    navigator.clipboard.writeText(text);
+  }
+
   async function deleteAddress() {
     if (!account || !token) return;
     try {
@@ -115,90 +114,77 @@ export default function Home() {
     if (pollRef.current) clearInterval(pollRef.current);
   }
 
-  function copyToClipboard(v) {
-    navigator.clipboard.writeText(v);
-  }
-
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow p-6">
-        <h1 className="text-2xl font-bold mb-4">Temp Mail Clone (Next.js)</h1>
+    <div className="container">
+      <div className="nav">
+        <h1>Temp Mail Service</h1>
+        <p>Discord ID : _.1tsunami</p>
+        <hr />
+        <p>
+          Forget about spam, advertising mailings, hacking and attacking robots.
+          Keep your real mailbox clean and secure. Temp Mail provides temporary,
+          secure, anonymous, free, disposable email address.
+        </p>
+      </div>
 
-        {!account ? (
-          <button
-            onClick={createAddress}
-            className="px-4 py-2 rounded bg-indigo-600 text-white"
-          >
+      {!account ? (
+        <div className="center">
+          <button onClick={createAddress} className="gen">
             Generate Address
           </button>
-        ) : (
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <div className="break-all font-mono">{account.address}</div>
-            <div className="flex gap-2 ml-auto">
-              <button
-                onClick={() => copyToClipboard(account.address)}
-                className="px-3 py-1 border rounded"
-              >
-                Copy
-              </button>
-              <button
-                onClick={fetchMessages}
-                className="px-3 py-1 border rounded"
-              >
-                Refresh
-              </button>
-              <button
-                onClick={deleteAddress}
-                className="px-3 py-1 border rounded text-red-600"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        )}
+        </div>
+      ) : (
+        <div className="email-button">
+          <p className="email">{account.address}</p>
+          <button onClick={copyText} className="copy">
+            Copy
+          </button>
+          <button className="refresh" onClick={fetchMessages}>
+            Refresh
+          </button>
+          <button onClick={deleteAddress} className="delete">
+            Delete
+          </button>
+        </div>
+      )}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-          <div className="md:col-span-1 border rounded p-3 h-64 overflow-y-auto">
-            <h2 className="font-semibold mb-2">Inbox</h2>
+      {account && (
+        <div className="inbox-section">
+          <h2 className="inbox">Inbox</h2>
+          {messages.length === 0 && <p className="notext">No messages</p>}
+          <ul className="msg-list">
             {messages.map((m) => (
-              <div
+              <li
                 key={m.id}
                 onClick={() => loadMessage(m.id)}
-                className="p-2 hover:bg-gray-100 rounded cursor-pointer"
+                className="msg-item"
               >
-                <div className="text-sm font-medium">{m.from?.address}</div>
-                <div className="text-xs text-gray-600 truncate">
-                  {m.subject}
-                </div>
-              </div>
+                <strong>{m.from?.address}</strong> - {m.subject}
+              </li>
             ))}
-          </div>
+          </ul>
 
-          <div className="md:col-span-2 border rounded p-3 h-64 overflow-y-auto">
-            <h2 className="font-semibold mb-2">Message</h2>
-            {!selected && (
-              <div className="text-sm text-gray-500">Select a message</div>
-            )}
-            {selected && (
-              <div>
-                <div className="mb-2">
-                  <strong>From:</strong> {selected.from?.address}
-                </div>
-                <div className="mb-2">
-                  <strong>Subject:</strong> {selected.subject}
-                </div>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: selected.html || selected.text,
-                  }}
-                />
-              </div>
-            )}
-          </div>
+          <h2 className="msg">Message</h2>
+          {!selected && <p className="notext">Select a message</p>}
+          {selected && (
+            <div className="semail">
+              <p>
+                <strong>From:</strong> {selected.from?.address}
+              </p>
+              <p>
+                <strong>Subject:</strong> {selected.subject}
+              </p>
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: selected.html || selected.text,
+                }}
+              />
+            </div>
+          )}
         </div>
+      )}
 
-        {error && <div className="mt-4 text-red-600">{error}</div>}
-      </div>
-    </main>
+      {error && <p className="error">{error}</p>}
+    </div>
   );
 }
